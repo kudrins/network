@@ -1,0 +1,27 @@
+---
+  - name: deploy inet-router
+    community.vmware.vmware_guest:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: False
+      datacenter: Datacenter
+      datastore: datastore_6TB
+      folder: otus_network
+      template: "t_ubuntu_s"
+      name: "inet_router"
+      networks:
+        - name: VMs11
+          ip:      10.100.11.42
+          netmask: 255.255.255.0
+          gateway: 10.100.11.254
+        - name:  VMs11
+          ip:      192.168.255.1
+          netmask: 255.255.255.252
+      customization:
+        hostname: inet-router
+        dns_servers: [8.8.8.8]
+      state: powered-on
+      wait_for_ip_address: true
+    register: deploy
+    delegate_to: localhost

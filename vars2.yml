@@ -1,0 +1,12 @@
+---
+vcenter_hostname: 10.100.10.1
+vcenter_username: administrator@vsphere.local
+vcenter_password: password
+
+vm_username: root
+vm_password: password
+
+servers:
+  - { template: t_ubuntu_s, name: central_server, memory_mb: 2048,  hostname: central-server, ip: 192.168.0.2,  mask: 255.255.255.240, gateway: 192.168.0.1}
+  - { template: t_ubuntu_s, name: office1_server, memory_mb: 2048,  hostname: office1-server, ip: 192.168.2.130,  mask: 255.255.255.192, gateway: 192.168.2.129}
+  - { template: t_ubuntu_s, name: office2-server, memory_mb: 2048,  hostname: office2-server, ip: 192.168.1.2,  mask: 255.255.255.128, gateway: 192.168.1.1}

@@ -1,0 +1,105 @@
+---
+  - name: deploy central-router
+    community.vmware.vmware_guest:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: False
+      datacenter: Datacenter
+      datastore: datastore_6TB
+      folder: otus_network
+      template: "t_ubuntu_s"
+      name: "central_router"
+      networks:
+        - name: VMs11
+          ip:      192.168.255.2
+          netmask: 255.255.255.252
+          gateway: 192.168.255.1
+        - name:  VMs11
+          ip:      192.168.0.1
+          netmask: 255.255.255.240
+        - name:  VMs11
+          ip:      192.168.0.33
+          netmask: 255.255.255.240
+        - name:  VMs11
+          ip:      192.168.0.65
+          netmask: 255.255.255.192
+        - name:  VMs11
+          ip:      192.168.255.9
+          netmask: 255.255.255.252
+        - name:  VMs11
+          ip:      192.168.255.5
+          netmask: 255.255.255.252
+      customization:
+        hostname: central-router
+        dns_servers: [8.8.8.8]
+      state: powered-on
+      wait_for_ip_address: true
+    register: deploy
+    delegate_to: localhost
+
+  - name: fetch 99-netcfg-vmware.yaml from vm
+    community.vmware.vmware_guest_file_operation:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      datacenter: Datacenter
+      validate_certs: False
+      folder: otus_network
+      vm_id: central_router
+      vm_username: "{{ vm_username }}"
+      vm_password: "{{ vm_password }}"
+      fetch:
+        src: "/etc/netplan/99-netcfg-vmware.yaml"
+        dest: "/home/sergey/otus/network/99-netcfg-vmware.yaml"
+    delegate_to: localhost
+
+  - name: cahange 99-netcfg-vmware.yaml
+    command: /home/sergey/otus/network/net1.sh
+    delegate_to: localhost  
+      
+  - name: copy 99-netcfg-vmware.yaml to vm
+    community.vmware.vmware_guest_file_operation:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      datacenter: Datacenter
+      validate_certs: False
+      folder: otus_network
+      vm_id: central_router
+      vm_username: "{{ vm_username }}"
+      vm_password: "{{ vm_password }}"
+      copy:
+        src: "/home/sergey/otus/network/99-netcfg-vmware.yaml"
+        dest: "/etc/netplan/99-netcfg-vmware.yaml"
+        overwrite: yes
+    delegate_to: localhost
+
+  - name: configure ip forwarding
+    community.vmware.vmware_vm_shell:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      datacenter: Datacenter
+      validate_certs: False
+      folder: otus_network
+      vm_id: central_router
+      vm_username: "{{ vm_username }}"
+      vm_password: "{{ vm_password }}"
+      vm_shell: "/usr/bin/echo"
+      vm_shell_args: "'net.ipv4.conf.all.forwarding = 1' >> /etc/sysctl.conf"
+    delegate_to: localhost
+
+  - name: restart VM
+    community.vmware.vmware_vm_shell:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      datacenter: Datacenter
+      validate_certs: False
+      folder: otus_network
+      vm_id: central_router
+      vm_username: "{{ vm_username }}"
+      vm_password: "{{ vm_password }}"
+      vm_shell: "/usr/sbin/reboot"
+    delegate_to: localhost

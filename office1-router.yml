@@ -1,0 +1,66 @@
+---
+  - name: deploy office1-router
+    community.vmware.vmware_guest:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: False
+      datacenter: Datacenter
+      datastore: datastore_6TB
+      folder: otus_network
+      template: "t_ubuntu_s"
+      name: "office1_router"
+      networks:
+        - name: VMs11
+          ip:      192.168.255.10
+          netmask: 255.255.255.252
+          gateway: 192.168.255.9
+        - name:  VMs11
+          ip:      192.168.2.1
+          netmask: 255.255.255.192
+        - name:  VMs11
+          ip:      192.168.2.65
+          netmask: 255.255.255.192
+        - name:  VMs11
+          ip:      192.168.2.129
+          netmask: 255.255.255.192
+        - name:  VMs11
+          ip:      192.168.2.193
+          netmask: 255.255.255.192
+      customization:
+        hostname: office1-router
+        dns_servers: [8.8.8.8]
+      state: powered-on
+      wait_for_ip_address: true
+    register: deploy
+    delegate_to: localhost
+
+  - name: configure ip forwarding
+    community.vmware.vmware_vm_shell:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      datacenter: Datacenter
+      validate_certs: False
+      folder: otus_network
+      vm_id: office1_router
+      vm_username: "{{ vm_username }}"
+      vm_password: "{{ vm_password }}"
+      vm_shell: "/usr/bin/echo"
+      vm_shell_args: "'net.ipv4.conf.all.forwarding = 1' >> /etc/sysctl.conf"
+    delegate_to: localhost
+
+  - name: configure ip forwarding 2
+    community.vmware.vmware_vm_shell:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      datacenter: Datacenter
+      validate_certs: False
+      folder: otus_network
+      vm_id: office1_router
+      vm_username: "{{ vm_username }}"
+      vm_password: "{{ vm_password }}"
+      vm_shell: "/usr/sbin/sysctl"
+      vm_shell_args: "-p"
+    delegate_to: localhost

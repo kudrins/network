@@ -1,0 +1,44 @@
+---
+- hosts: localhost
+  vars_files: vars2.yml
+  become: false
+  gather_facts: false
+  tasks:
+    - include_tasks: servers.yml
+    - include_tasks: central-router.yml
+    - include_tasks: office1-router.yml
+    - include_tasks: office2-router.yml
+    - include_tasks: inet-router.yml
+
+- name: configire inet-router
+  hosts: inet-router
+  become: true 
+  gather_facts: false
+  tasks:
+  - name: copy iptables.sh
+    copy:
+      src: inet-99-netcfg-vmware.yaml
+      dest: /etc/netplan/iptables.sh
+  - name: copy iptables_rules.ipv4
+    copy:
+      src: iptables_rules.ipv4
+      dest: /etc/iptables_rules.ipv4
+      mode: 0644
+  - name: copy iptables.sh
+    copy:
+      src: iptables_restore
+      dest: /etc/network/iptables.sh
+      mode: 0755
+  - name: set up forward packages across routers
+    sysctl:
+      name: net.ipv4.conf.all.forwarding
+      value: '1'
+      state: present
+  - name: configure iner-router
+    shell: "{{item}}"
+    with_items:
+      - systemctl stop ufw
+      - systemctl disable ufw
+      - echo "@reboot /etc/network/iptables.sh" | crontab -u root -
+      - sleep 10
+      - reboot
